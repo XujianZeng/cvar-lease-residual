@@ -1,0 +1,19 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local inputs and generated outputs
+data/
+figures/
+logs/
+results.json
+study_results*.json
+revision_results.json
+cycle_results.json
+cross_issuer_summary.json
+cross_issuer_table.md
+filings_used.csv
+
+# Manuscript materials are outside this code-only repository
+manuscript/
