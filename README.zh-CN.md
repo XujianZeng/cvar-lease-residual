@@ -14,6 +14,11 @@
 
 这些代码用于历史租赁样本的研究分析，不是生产环境的残值定价服务，也不是完整的资产池损失模型。
 
+## 研究记录
+
+- [`analysis_plan_extension.md`](analysis_plan_extension.md) 记录 GM 在 2019—2024 年间的跨年份检验方案。源文件最后修改于北京时间 2026-09-25 10:51:37，SHA-256 为 `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`。
+- [`filings_used.csv`](filings_used.csv) 列出 17 个数据集所用的 185 份 SEC XML 文件，包括申报日期、accession 编号、来源链接、文件大小和提取的事件记录数。它是文件清单，不含逐笔租赁记录。
+
 ## 仓库结构
 
 | 路径 | 作用 |
@@ -51,4 +56,4 @@ export SEC_USER_AGENT='Your Name your.email@example.com'
 
 其他发行人参数为 `nissan`、`vw` 和 `ford`。补充分析运行 `analysis.revision_study`，跨年份检验运行 `analysis.cycle_study`；四家发行人的结果均生成后，可运行 `analysis.summarize`。`cycle_study` 还需要 `revision_results.json`。最初的 GM 试验可用 `python -m analysis.analyze --train ... --test ... --final ... --output results.json` 运行。
 
-本仓库只保存代码，不收录数据、生成的结果与图表，也不收录论文材料。结果写入仓库根目录，图表写入 `figures/`。
+本仓库不收录逐笔租赁输入数据、生成的结果与图表，也不收录论文草稿和生成脚本。结果写入仓库根目录，图表写入 `figures/`。

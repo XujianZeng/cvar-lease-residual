@@ -13,7 +13,6 @@ revision_results.json
 cycle_results.json
 cross_issuer_summary.json
 cross_issuer_table.md
-filings_used.csv
 
 # Manuscript materials are outside this code-only repository
 manuscript/

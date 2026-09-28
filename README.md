@@ -14,6 +14,11 @@ For each eligible terminated lease, the code measures shortfall as `max(valued r
 
 This is research code for historical lease cohorts. It is not a production valuation service or a complete portfolio loss model.
 
+## Research record
+
+- [`analysis_plan_extension.md`](analysis_plan_extension.md) specifies the GM 2019–2024 cross-year evaluation. The source file was last modified on 2026-09-25 at 10:51:37 China Standard Time; its SHA-256 is `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`.
+- [`filings_used.csv`](filings_used.csv) lists 185 SEC XML filings used across 17 dataset labels, with filing dates, accession numbers, source URLs, file sizes, and extracted event-row counts. It contains filing metadata, not lease-level records.
+
 ## Repository map
 
 | Path | Role |
@@ -51,4 +56,4 @@ With all files for an issuer present, run its study from the repository root:
 
 Other issuer choices are `nissan`, `vw`, and `ford`. Run `analysis.revision_study` for additional analyses, `analysis.cycle_study` for the cross-year study, and `analysis.summarize` after generating results for all four issuers. `cycle_study` also requires `revision_results.json`. The original GM pilot can be run with `python -m analysis.analyze --train ... --test ... --final ... --output results.json`.
 
-Data, generated results and figures, and manuscript materials are excluded from this code-only repository. Results are written to the repository root and charts to `figures/`.
+Lease-level input data, generated results and figures, and manuscript drafts and build scripts are excluded. Results are written to the repository root and charts to `figures/`.
