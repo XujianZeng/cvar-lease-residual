@@ -2,29 +2,39 @@
 
 [简体中文](README.zh-CN.md) | English
 
-Python code for collecting public SEC ABS-EE lease records and studying return-aware residual risk buffers. This repository contains source code only. It does not include input data, generated results or figures, or manuscript materials.
+This project studies how to set **valued residuals for securitized auto leases** when a vehicle may be returned and sold for less than its assigned residual value. A higher valued residual preserves more value in a lease pool, but can increase losses in adverse outcomes. The research question is whether a rule that accounts for return risk can retain more value while controlling those losses.
 
-## Structure
+For each eligible terminated lease, the code measures shortfall as `max(valued residual − net liquidation proceeds, 0)` if the vehicle was returned, and zero otherwise. It uses **CVaR at 99%**—the average shortfall among the worst 1% of leases—as the tail-risk measure. On a training cohort, it fits valuation ratios under a CVaR constraint based on the issuer's reported base residual. It then applies the fitted rules unchanged to later cohorts. Rules are also compared at the same average valued residual so their tail risk can be assessed on equal value terms.
 
-| Directory | Purpose |
+## What the code does
+
+1. **Collect and prepare observations.** Extract relevant lease termination fields from public SEC ABS-EE asset-level filings, join monthly records by asset, and associate returned vehicles with subsequent liquidation proceeds.
+2. **Fit residual valuation rules.** Compare a uniform ratio, issuer base residuals, brand-specific ratios, and return-aware risk buckets. The bucket approach uses origination attributes to estimate return probability and potential disposal shortfall, then optimizes bucket ratios under the CVaR constraint.
+3. **Check generalization.** Evaluate fixed rules on later GM, Nissan, Volkswagen, and Ford Credit cohorts; add pooled comparisons, stress scenarios, a gradient-boosting benchmark, and a GM cross-year study covering 2019–2024.
+
+This is research code for historical lease cohorts. It is not a production valuation service or a complete portfolio loss model.
+
+## Repository map
+
+| Path | Role |
 | --- | --- |
-| `collection/` | `collect_sec.py`: collect lease termination records from SEC filings. |
-| `analysis/` | `analyze.py`: original GM pilot; `buffer_study.py`: issuer studies; `revision_study.py`: additional benchmarks and stress analyses; `cycle_study.py`: cross-year evaluation; `summarize.py`: cross-issuer summary. |
+| `collection/collect_sec.py` | Collect selected lease records from SEC filings. |
+| `analysis/analyze.py` | Original GM brand-based pilot. |
+| `analysis/buffer_study.py` | Main return-aware buffer study across issuers. |
+| `analysis/revision_study.py` | Pooled evidence, stress analysis, and gradient-boosting benchmark. |
+| `analysis/cycle_study.py` | GM year-to-next-year evaluation. |
+| `analysis/summarize.py` | Cross-issuer tables and charts from study results. |
 
-`requirements.txt` lists the Python dependencies. Use Python 3.10 or newer. Run the commands below from the repository root with `python -m` so package imports work.
+## Running the code
 
-## Setup
+Use Python 3.10 or newer. From the repository root:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-## Data and execution
-
-The analysis modules expect JSONL inputs under `data/` with the filenames defined in `analysis/buffer_study.py` and `analysis/cycle_study.py`. Supply those files locally or collect the relevant SEC filings. Data and generated outputs are ignored by Git.
-
-Set an identifying SEC user agent with a contact address before collecting data:
+Input data is **not included**. Analysis modules expect JSONL cohorts in `data/`; required filenames and windows are defined in `analysis/buffer_study.py` and `analysis/cycle_study.py`. You can supply the cohort files locally or collect the relevant SEC filings. Collection requires `SEC_USER_AGENT` with an identifying name and contact address:
 
 ```bash
 export SEC_USER_AGENT='Your Name your.email@example.com'
@@ -33,26 +43,12 @@ export SEC_USER_AGENT='Your Name your.email@example.com'
   --output data/gm_2022_3_2024.jsonl
 ```
 
-Once the required cohort files are present, run the studies:
+With all files for an issuer present, run its study from the repository root:
 
 ```bash
 .venv/bin/python -m analysis.buffer_study --issuer gm
-.venv/bin/python -m analysis.buffer_study --issuer nissan
-.venv/bin/python -m analysis.buffer_study --issuer vw
-.venv/bin/python -m analysis.buffer_study --issuer ford
-.venv/bin/python -m analysis.revision_study
-.venv/bin/python -m analysis.cycle_study
-.venv/bin/python -m analysis.summarize
 ```
 
-`summarize` reads the four `study_results*.json` files. `cycle_study` also reads `revision_results.json`. Results are written to the repository root, and charts to `figures/`.
+Other issuer choices are `nissan`, `vw`, and `ford`. Run `analysis.revision_study` for additional analyses, `analysis.cycle_study` for the cross-year study, and `analysis.summarize` after generating results for all four issuers. `cycle_study` also requires `revision_results.json`. The original GM pilot can be run with `python -m analysis.analyze --train ... --test ... --final ... --output results.json`.
 
-For the original GM pilot, provide its three cohorts explicitly:
-
-```bash
-.venv/bin/python -m analysis.analyze \
-  --train data/gm_2022_3_2024.jsonl \
-  --test data/gm_2023_1_2025.jsonl \
-  --final data/gm_2023_3_2025_26.jsonl \
-  --output results.json
-```
+Data, generated results and figures, and manuscript materials are excluded from this code-only repository. Results are written to the repository root and charts to `figures/`.
