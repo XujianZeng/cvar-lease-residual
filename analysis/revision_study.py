@@ -27,7 +27,7 @@ from sklearn.model_selection import KFold
 from . import buffer_study as bs
 from .analyze import cvar
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).parent.parent
 ALPHA = 0.99
 BOOT = 1000
 SHOCKS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7)

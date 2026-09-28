@@ -19,7 +19,7 @@ from . import buffer_study as bs
 from . import revision_study as rs
 from .analyze import cvar
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).parent.parent
 ALPHA = 0.99
 BOOT = 1000
 MIN_LEASES, MIN_RETURNS = 1000, 100

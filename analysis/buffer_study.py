@@ -18,7 +18,7 @@ from scipy.sparse import coo_matrix
 
 from .analyze import cvar
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).parent.parent
 # Termination windows are inclusive (YYYY-MM, YYYY-MM). Proceeds are summed over
 # the termination month and the two following monthly reports, so each window
 # ends at least two months before the last collected report.

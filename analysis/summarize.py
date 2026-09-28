@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).parent.parent
 RUNS = [("GM", "study_results.json"), ("Nissan", "study_results_nissan.json"),
         ("VW", "study_results_vw.json"), ("Ford", "study_results_ford.json")]
 RULES = [("Contract-anchored", "Return-aware buckets (K=4)", "tab:red", "D"),
