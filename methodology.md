@@ -1,11 +1,11 @@
-# Post-hoc revision protocol 29 September 2026
+# Analysis methodology and sensitivity specifications
 
-This document records revisions made after inspection of the primary and
-cross-cycle results and the 28 September audit. It is not a preregistration.
-The original `analysis_plan_extension.md` and its hash are preserved unchanged.
+This document describes the valuation methods and exploratory sensitivity
+analyses. The sensitivities are post-hoc analyses, not preregistered tests.
+The cross-cycle evaluation plan is documented in `analysis_plan_extension.md`.
 
-The primary three-month, positive-proceeds sample and original valuation rules
-are retained for comparability. The contract-anchored problem is an exact LP.
+The primary sample uses three-month positive proceeds.
+The contract-anchored problem is an exact LP.
 The base-anchored implementation is a feasible heuristic obtained by solving
 an uncapped surrogate LP and capping afterwards; no claim is made that it
 maximizes the capped objective. Training feasibility and clipping diagnostics
@@ -36,10 +36,10 @@ AUC uses average ranks for ties. Bootstrap tail probabilities use a plus-one
 Monte Carlo correction and never claim a probability of exactly zero. Holm
 families retain their stated scope. Figure 4 uses the same percentage-change
 draws as Table 4. Both Pearson and Spearman correlations are reported for the
-eight- and thirteen-holdout sets. New sensitivities are exploratory.
+eight- and thirteen-holdout sets. Sensitivity analyses are exploratory.
 
-The papers distinguish residual-component stress loss rates from transaction
+Interpretation distinguishes residual-component stress loss rates from transaction
 credit-enhancement requirements, retrospective termination-cohort evaluation
 from issuance-time deployment, and failure to detect deterioration from a
-positive noninferiority claim. The original plan's field-availability pilot
-and the limits of its local timestamp evidence are disclosed.
+positive noninferiority claim. The extension plan follows a field-availability
+pilot; its local timestamp and hash do not independently certify a historical date.
