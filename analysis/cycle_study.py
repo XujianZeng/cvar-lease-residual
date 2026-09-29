@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Out-of-time extension across the 2019–2024 used-car cycle (GM Financial).
 
-Fits every rule on one year's terminations and evaluates it unchanged on the
-next year's (five tests, 2020–2024).
+Implements the core design in `analysis_plan_extension.md`: fit every rule on one year's
+terminations and evaluate it unchanged on the next year's (five tests, 2020–2024).
 Rules and evaluation reuse `buffer_study.py` and `revision_study.py`.
 Writes `cycle_results.json` and `figures/cycle.{png,pdf}`.
 """
@@ -43,10 +43,7 @@ def pct_change(v, kind, d):
 
 
 def summarize(point, draws):
-    ok = draws[~np.isnan(draws)]
-    p = 2 * min(np.mean(ok >= 0), np.mean(ok <= 0))
-    return {"pct": float(point), "ci95": [float(np.percentile(ok, 2.5)), float(np.percentile(ok, 97.5))],
-            "p_boot": float(min(p, 1.0)), "undefined_draws": int(np.isnan(draws).sum())}
+    return rs.summarize(point, draws)
 
 
 def describe(d):

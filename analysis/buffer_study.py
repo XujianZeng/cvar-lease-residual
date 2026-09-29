@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import linprog, minimize
 from scipy.sparse import coo_matrix
+from scipy.stats import rankdata
 
 from .analyze import cvar
 
@@ -62,9 +63,19 @@ def month_index(text, sep):
     return None
 
 
-def load(path, start, end):
+def load(path, start, end, *, proceeds_months=3, include_nonpositive=False,
+         require_followup_months=None):
     """Nondefault terminations (payoff=1, return=2; SEC ABS-EE code list) with
-    effective date in [start, end], one record per lease."""
+    effective date in [start, end], one record per lease.
+
+    The primary specification excludes returned leases without positive recorded
+    proceeds over three calendar months. Alternative settings are explicit
+    sensitivity scenarios, not imputations of the unobserved final sale price.
+    Maturity is assessed against the last reporting month in the entire file,
+    not an asset's last appearance (assets may disappear after termination).
+    """
+    if proceeds_months < 1:
+        raise ValueError("proceeds_months must be positive")
     y0, m0 = map(int, start.split("-"))
     y1, m1 = map(int, end.split("-"))
     lo, hi = y0 * 12 + m0 - 1, y1 * 12 + m1 - 1
@@ -73,6 +84,9 @@ def load(path, start, end):
         for line in handle:
             row = json.loads(line)
             by_asset.setdefault(row["assetNumber"], []).append(row)
+    last_report = max(month_index(r.get("reportingPeriodEndDate"), "-") or -1
+                      for rows in by_asset.values() for r in rows)
+    required = proceeds_months if require_followup_months is None else max(proceeds_months, require_followup_months)
     counts, kept = {}, []
 
     def count(key):
@@ -91,30 +105,46 @@ def load(path, start, end):
         row = eligible[0]
         returned = row["terminationIndicator"] == "2"
         event = month_index(row["zeroBalanceEffectiveDate"], "/")
+        count("candidate_nondefault")
         proceeds = sum(float(r.get("liquidationProceedsAmount") or 0) for r in rows
                        if (m := month_index(r.get("reportingPeriodEndDate"), "-")) is not None
-                       and 0 <= m - event <= 2)
+                       and 0 <= m - event < proceeds_months)
         attrs = next((r for r in rows if float(r.get("contractResidualValue") or 0) > 0), row)
         q = float(attrs.get("contractResidualValue") or 0)
         b = float(attrs.get("baseResidualValue") or 0)
         msrp = float(attrs.get("vehicleValueAmount") or 0)
         acq = float(attrs.get("acquisitionCost") or 0)
         term = float(attrs.get("originalLeaseTermNumber") or 0)
-        if returned and proceeds <= 0:
-            count("returned_without_proceeds")
-            continue
         if q <= 0 or b <= 0 or b > q * 1.001:
             count("invalid_residual")
             continue
         if msrp <= 0 or acq <= 0 or term <= 0:
             count("missing_msrp_cost_or_term")
             continue
+        count("valid_attributes")
+        if last_report - event + 1 < required:
+            count("insufficient_followup")
+            continue
+        count("eligible_with_followup")
+        if returned:
+            count("candidate_returned")
+            if proceeds <= 0:
+                count("returned_without_proceeds")
+                if not include_nonpositive:
+                    continue
         count("returned" if returned else "retained")
+        scheduled = month_index(row.get("scheduledTerminationDate"), "/")
         kept.append({"q": q, "b": b, "msrp": msrp, "acq": acq, "term": term,
                      "type": attrs.get("vehicleTypeCode"), "p": proceeds, "r": returned,
+                     "event_month": event, "asset": row["assetNumber"],
+                     "early_termination": scheduled is not None and event < scheduled,
                      "brand": (attrs.get("vehicleManufacturerName") or "").strip().upper()})
+    if not kept:
+        raise ValueError(f"No eligible leases for {path}, {start}–{end}")
     d = {k: np.array([x[k] for x in kept]) for k in kept[0]}
     d["counts"], d["n"] = counts, len(kept)
+    d["construction"] = {"proceeds_months": proceeds_months, "include_nonpositive": include_nonpositive,
+                         "required_followup_months": required, "last_report_month": last_report}
     return d
 
 
@@ -313,6 +343,19 @@ class RiskBucket:
         self.edges = np.quantile(s, np.linspace(0, 1, self.K + 1)[1:-1])
         self.ratios = group_lp(d, self.bucket(d), self.K, target, alpha, self.monotone,
                                self.anchor, self.upper)
+        uncapped = d[self.anchor] * self.ratios[self.bucket(d)]
+        actual = self.value(d)
+        risk = cvar(shortfall(actual, d), alpha)
+        if risk > target + 1e-5 * max(1.0, target):
+            raise RuntimeError("Fitted rule violates the training CVaR constraint")
+        self.fit_diagnostics = {
+            "optimization": "exact_uncapped_lp" if self.anchor == "q" else "uncapped_surrogate_lp_then_cap",
+            "capped_implementation_optimality_claimed": self.anchor == "q",
+            "cap_count": int(np.sum(uncapped > d["q"] + 1e-8)),
+            "uncapped_mean_value": float(uncapped.mean()), "actual_mean_value": float(actual.mean()),
+            "actual_training_cvar": float(risk), "risk_limit": float(target),
+            "mean_value_difference_vs_reported_base": float(actual.mean() - d["b"].mean()),
+        }
         return self
 
     def value(self, d):
@@ -417,10 +460,11 @@ def bucket_profile(rule, data):
 
 
 def auc(score, y):
-    order = np.argsort(score)
-    rank = np.empty(len(score))
-    rank[order] = np.arange(1, len(score) + 1)
+    y = np.asarray(y, dtype=bool)
+    rank = rankdata(score, method="average")
     n1 = y.sum()
+    if n1 == 0 or n1 == len(y):
+        return float("nan")
     return float((rank[y].sum() - n1 * (n1 + 1) / 2) / (n1 * (len(y) - n1)))
 
 
@@ -432,6 +476,7 @@ def figures(frontier, profile, data, out):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import MaxNLocator
     out.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({"font.size": 9, "figure.dpi": 150, "savefig.dpi": 600})
 
@@ -449,6 +494,8 @@ def figures(frontier, profile, data, out):
         ax.plot(rb["cvar"], rb["mean_valued_residual"], "k*", ms=9, label="Reported base residual")
         ax.set_title(COHORT_LABEL[cohort])
         ax.set_xlabel("CVaR$_{99}$ of per-lease shortfall (USD)")
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=4))
+        ax.tick_params(axis="x", labelsize=8)
         ax.grid(alpha=.3)
     axes[0].set_ylabel("Mean valued residual (USD)")
     handles, labels = axes[0].get_legend_handles_labels()
@@ -555,6 +602,7 @@ def main():
         "stress_proceeds": {k: {str(s): point_gaps(proposed, d, alpha, s) for s in (1.0, 0.95, 0.90, 0.85)}
                             for k, d in data.items() if k != "train"},
         "bucket_profile": bucket_profile(proposed, data),
+        "fit_diagnostics": {n: r.fit_diagnostics for n, r in rules.items() if isinstance(r, RiskBucket)},
     }
 
     print("bootstrap ...", flush=True)

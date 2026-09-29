@@ -17,6 +17,13 @@ BENCHMARKS = [("uniform", "Uniform ratio"), ("scaled_base", "Scaled issuer base 
 
 
 def collect():
+    """Use ratio bootstrap intervals, identically to Table 4 and both figures."""
+    from . import revision_study as rs
+    return rs.forest_rows(json.loads((HERE / "revision_results.json").read_text()))
+
+
+def legacy_absolute_gap_rows():
+    """Archived absolute-gap summary; not used for relative-change inference."""
     rows = []
     for issuer, file in RUNS:
         r = json.loads((HERE / file).read_text())

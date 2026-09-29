@@ -154,9 +154,15 @@ def boot_samples(values, d):
 
 
 def summarize(point, draws):
-    p = 2 * min(np.mean(draws >= 0), np.mean(draws <= 0))
-    return {"pct": float(point), "ci95": [float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))],
-            "p_boot": float(min(p, 1.0))}
+    draws = np.asarray(draws, dtype=float)
+    valid = draws[np.isfinite(draws)]
+    if not len(valid):
+        return {"pct": float(point), "ci95": [float("nan"), float("nan")],
+                "p_boot": 1.0, "undefined_draws": len(draws)}
+    # Finite-Monte-Carlo correction: do not report a literal zero probability.
+    p = 2 * (1 + min(np.sum(valid >= 0), np.sum(valid <= 0))) / (len(valid) + 1)
+    return {"pct": float(point), "ci95": np.percentile(valid, [2.5, 97.5]).tolist(),
+            "p_boot": float(min(p, 1.0)), "undefined_draws": int(len(draws) - len(valid))}
 
 
 def holm(pvals):
@@ -179,7 +185,8 @@ def forest_rows(results):
     rows = []
     for h in results["holdouts"]:
         for label, key in names.items():
-            e = {"issuer": LABEL[h["issuer"]], "cohort": h["cohort"], "rule": label}
+            e = {"issuer": LABEL[h["issuer"]], "cohort": h["cohort"], "rule": label,
+                 "auc": h["auc"]["logit"], "n": h["n"], "returned": h["returned"]}
             for bench in ("uniform", "scaled_base"):
                 c = h["comparisons"][f"{key}|{bench}"]
                 e[bench] = {"pct": c["pct"], "ci_pct": c["ci95"]}
@@ -256,7 +263,7 @@ def main():
         adj = holm(np.array([h["comparisons"][name]["p_boot"] for h in holdouts]))
         for h, a in zip(holdouts, adj):
             h["comparisons"][name]["p_holm"] = float(a)
-    # Pooled equal-weighted change per tier (independent strata -> sum of draws).
+    # Conditional stratified bootstrap; this does not model common market shocks.
     pooled = {}
     tiers = {"all": [h for h in holdouts],
              "replication+confirmatory": [h for h in holdouts if h["tier"] != "development"],

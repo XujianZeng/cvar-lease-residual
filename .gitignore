@@ -16,3 +16,5 @@ cross_issuer_table.md
 
 # Manuscript materials are outside this code-only repository
 manuscript/
+
+robustness_results*.json
