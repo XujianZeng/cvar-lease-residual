@@ -6,15 +6,13 @@ This project studies how to set **valued residuals for securitized auto leases**
 
 For each eligible terminated lease, the code measures shortfall as `max(valued residual − net liquidation proceeds, 0)` if the vehicle was returned, and zero otherwise. It uses **CVaR at 99%**—the average shortfall among the worst 1% of leases—as the tail-risk measure. On a training cohort, it fits valuation ratios under a CVaR constraint based on the issuer's reported base residual. It then applies the fitted rules unchanged to later cohorts. Rules are also compared at the same average valued residual so their tail risk can be assessed on equal value terms.
 
-## 2026-09-29 revision
+## Methods and interpretation
 
-The base-anchored implementation is a feasible capped heuristic, not an optimizer of the capped objective. The original primary samples and rules are preserved. AUC now uses average ranks for ties; bootstrap sign-tail measures use a finite-simulation plus-one correction. Both percentage-change figures use the same ratio-bootstrap intervals as the manuscript tables.
+The base-anchored implementation is a feasible capped heuristic, not an optimizer of the capped objective. AUC uses average ranks for ties; bootstrap sign-tail measures use a finite-simulation plus-one correction. Both percentage-change figures use the same ratio-bootstrap intervals as the manuscript tables.
 
 `analysis.robustness_study` refits the entire pipeline under four explicit proceeds settings and reports sample flows, dollar gaps, sparse-tail counts, undefined ratio draws, leave-one-year-out effects, month-cluster intervals and paired GB/LR comparisons. These are **post-hoc** analyses. Retaining nonpositive recorded three-month proceeds reverses the base-anchored confirmatory pooled estimate from -2.2% to +13.7%; unknown final recoveries cannot be inferred from that scenario. Do not describe the rule as non-inferior or universally robust.
 
-The original extension plan follows a June 2019 pilot and precedes bulk collection. Its hash authenticates the saved text, not an independently certified historical date. The dated revision protocol documents these limitations and additions.
-
-After the four main issuer runs, execute `python -m analysis.revision_study`, `python -m analysis.cycle_study`, `python -m analysis.robustness_study`, then `python -m analysis.summarize`. Run scientific checks with `python -m unittest analysis.test_invariants -v`. Setting `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1` makes performance more predictable. The manuscript submission includes a separate reproducibility snapshot with the saved numerical results.
+The extension plan follows a June 2019 pilot and precedes bulk collection. Its hash authenticates the saved text, not an independently certified historical date. See [`methodology.md`](methodology.md) for analysis specifications and limitations.
 
 ## What the code does
 
@@ -24,13 +22,13 @@ After the four main issuer runs, execute `python -m analysis.revision_study`, `p
 
 This is research code for historical lease cohorts. It is not a production valuation service or a complete portfolio loss model.
 
-## Research record
+## Data and analysis documentation
 
 - [`analysis_plan_extension.md`](analysis_plan_extension.md) specifies the GM 2019–2024 cross-year evaluation. The source file was last modified on 2026-09-25 at 10:51:37 China Standard Time; its SHA-256 is `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`.
 - [`filings_used.csv`](filings_used.csv) lists 185 SEC XML filings used across 17 dataset labels, with filing dates, accession numbers, source URLs, file sizes, and extracted event-row counts. It contains filing metadata, not lease-level records.
-- [`revision_protocol_2026-09-29.md`](revision_protocol_2026-09-29.md) records the post-hoc corrections and sensitivity analyses. The analysis and collection implementations match the revised manuscript's Supplementary File S3, apart from package imports and repository-relative paths.
+- [`methodology.md`](methodology.md) describes the valuation rules, proceeds specifications, uncertainty measures, and interpretation of exploratory sensitivity analyses. The numerical methods correspond to the manuscript's Supplementary File S3.
 
-## Correspondence with the revised manuscript
+## Correspondence with the manuscript
 
 | Method or result | Implementation |
 | --- | --- |
@@ -39,7 +37,7 @@ This is research code for historical lease cohorts. It is not a production valua
 | Table 4 and Figures 3–4 percentage intervals | `analysis.revision_study.forest_rows` and `analysis.summarize.collect` use the same percentage-bootstrap intervals from `revision_results.json`. |
 | Equal-value issuer benchmark | `analysis.revision_study.scaled_base_equal` rescales the issuer base residual to the rule's mean valued residual, subject to the contract cap. This differs from the unscaled reported base residual. |
 | Table 7 stressed-value release | `analysis.revision_study.equal_stress_release` matches total stressed loss in USD, not the loss rate. |
-| Base-anchored rule and proceeds sensitivities | `analysis.buffer_study.RiskBucket` reports cap/feasibility diagnostics; `analysis.robustness_study` refits all four dated proceeds scenarios. |
+| Base-anchored rule and proceeds sensitivities | `analysis.buffer_study.RiskBucket` reports cap/feasibility diagnostics; `analysis.robustness_study` refits all four proceeds scenarios. |
 
 ## Repository map
 
@@ -93,6 +91,6 @@ export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 
 Main runs use 1,000 conditional holdout bootstrap draws and 200 training-refit draws. The two alpha sensitivities use 200/50 draws and run before the GM main analysis so that the final GM figures use alpha 0.99. Proceeds sensitivities refit each scenario, then use 1,000 conditional draws; these are not 1,000 training refits. The original GM pilot is separate and can be run with `python -m analysis.analyze --train ... --test ... --final ... --output results.json`.
 
-Lease-level input data, generated results and figures, and manuscript drafts and build scripts are excluded. Results are written to the repository root and charts to `figures/`.
+The repository contains data collection, processing, modeling, statistical validation, and result table/chart code. It contains no manuscript-writing, document-generation, or typesetting scripts. Lease-level input data, generated results and figures, and manuscript drafts are excluded. Results are written to the repository root and charts to `figures/`.
 
-Undefined robustness percentages are saved as JSON `null`, with undefined bootstrap draws counted explicitly. Refer to Supplementary File S2 and the dated protocol when interpreting sparse-tail intervals and the base-anchor sensitivity reversal.
+Undefined robustness percentages are saved as JSON `null`, with undefined bootstrap draws counted explicitly. Refer to Supplementary File S2 and [`methodology.md`](methodology.md) when interpreting sparse-tail intervals and the base-anchor sensitivity reversal.

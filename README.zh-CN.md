@@ -6,15 +6,13 @@
 
 对每笔符合条件的已终止租赁，代码将退租车辆的缺口定义为 `max(计价残值 − 净处置收入, 0)`；未退租车辆的缺口记为零。尾部风险使用 **99% CVaR** 衡量，即缺口最严重的 1% 租赁的平均缺口。代码在训练样本中，以发行人报告的基础残值对应的 CVaR 为约束，拟合不同的残值计价比例，再将规则原样应用到后续样本。比较规则时还会固定平均计价残值，以便在相同价值水平下比较尾部风险。
 
-## 2026-09-29 修订
+## 方法与结果解释
 
-基础残值锚定实现是风险可行的封顶启发式，不保证封顶目标最优。主样本与原计价规则保留；AUC 改为并列平均秩，bootstrap 尾部量加入有限模拟修正，两张百分比图与正文表格使用同一组比例 bootstrap 区间。
+基础残值锚定实现是风险可行的封顶启发式，不保证封顶目标最优。AUC 使用并列平均秩，bootstrap 尾部量采用有限模拟加一修正，两张百分比图与正文表格使用同一组比例 bootstrap 区间。
 
-新增 `analysis.robustness_study`，在四种回款口径下完整重新拟合，报告样本流转、美元差额、尾部笔数、无定义比例次数、逐年剔除、月份整簇及 GB/LR 配对比较。新增分析明确为事后分析。保留三个月非正记录回款后，基础锚定确认性合并估计从 -2.2% 变为 +13.7%；该情景不代表已知最终回收。不能再宣称普遍稳健或非劣。
+`analysis.robustness_study` 在四种回款口径下完整重新拟合，报告样本流转、美元差额、尾部笔数、无定义比例次数、逐年剔除、月份整簇及 GB/LR 配对比较。这些属于事后分析。保留三个月非正记录回款后，基础锚定确认性合并估计从 -2.2% 变为 +13.7%；该情景不代表已知最终回收，结果不支持普遍稳健或非劣的结论。
 
-原方案形成于 2019 年 6 月试点观察之后、批量采集之前。哈希值只固定文本，不独立认证历史时间。本次新增内容详见带日期的修订方案。
-
-四家发行方主分析之后，依次运行 `python -m analysis.revision_study`、`python -m analysis.cycle_study`、`python -m analysis.robustness_study`、`python -m analysis.summarize`；科学校验运行 `python -m unittest analysis.test_invariants -v`。可设置 `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1`。论文投稿材料另附含保存结果的可复现快照。
+扩展分析方案形成于 2019 年 6 月样本的试点观察之后、批量采集之前。哈希值只固定文本，不独立认证历史时间。分析口径与局限详见 [`methodology.md`](methodology.md)。
 
 ## 代码主要完成什么
 
@@ -24,13 +22,13 @@
 
 这些代码用于历史租赁样本的研究分析，不是生产环境的残值定价服务，也不是完整的资产池损失模型。
 
-## 研究记录
+## 数据与分析说明
 
 - [`analysis_plan_extension.md`](analysis_plan_extension.md) 记录 GM 在 2019—2024 年间的跨年份检验方案。源文件最后修改于北京时间 2026-09-25 10:51:37，SHA-256 为 `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`。
 - [`filings_used.csv`](filings_used.csv) 列出 17 个数据集所用的 185 份 SEC XML 文件，包括申报日期、accession 编号、来源链接、文件大小和提取的事件记录数。它是文件清单，不含逐笔租赁记录。
-- [`revision_protocol_2026-09-29.md`](revision_protocol_2026-09-29.md) 记录事后修正和敏感性分析。除包导入方式及仓库相对路径外，分析与采集实现和修订稿补充文件 S3 一致。
+- [`methodology.md`](methodology.md) 说明计价规则、回款口径、不确定性度量及探索性敏感性分析的解释边界。数值方法与论文补充文件 S3 对应。
 
-## 与修订稿的对应关系
+## 与论文的对应关系
 
 | 方法或结果 | 代码实现 |
 | --- | --- |
@@ -39,7 +37,7 @@
 | 表 4、图 3–4 的百分比区间 | `analysis.revision_study.forest_rows` 和 `analysis.summarize.collect` 共用 `revision_results.json` 中的百分比 bootstrap 区间。 |
 | 等价值发行方基准 | `analysis.revision_study.scaled_base_equal` 在合同残值封顶下，将发行方基础残值缩放至待评规则的平均计入残值，与未缩放的原始基础残值不同。 |
 | 表 7 的压力下多计入价值 | `analysis.revision_study.equal_stress_release` 匹配的是压力损失总金额（美元），而非损失率。 |
-| 基础锚定规则及回款敏感性 | `analysis.buffer_study.RiskBucket` 报告封顶和可行性诊断；`analysis.robustness_study` 对四种带日期的回款口径完整重拟合。 |
+| 基础锚定规则及回款敏感性 | `analysis.buffer_study.RiskBucket` 报告封顶和可行性诊断；`analysis.robustness_study` 对四种回款口径完整重拟合。 |
 
 ## 仓库结构
 
@@ -93,6 +91,6 @@ export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 
 主分析采用 1,000 次条件于已拟合模型的检验集抽样和 200 次训练重拟合；两种 alpha 敏感性采用 200/50 次抽样，并在 GM 主分析之前运行，使最终 GM 图形使用 alpha 0.99。回款敏感性在每种口径下重新拟合，再做 1,000 次条件抽样，不是 1,000 次训练重拟合。独立的原始 GM 试验可用 `python -m analysis.analyze --train ... --test ... --final ... --output results.json` 运行。
 
-本仓库不收录逐笔租赁输入数据、生成的结果与图表，也不收录论文草稿和生成脚本。结果写入仓库根目录，图表写入 `figures/`。
+本仓库包含数据采集、处理、建模、统计检验及结果表格和图表代码，不包含论文正文写作、文档生成或排版脚本。逐笔租赁输入数据、生成的结果与图表、论文草稿不收录在仓库中。结果写入仓库根目录，图表写入 `figures/`。
 
-无定义的稳健性百分比保存为 JSON `null`，无定义 bootstrap 次数明确报告。解释稀疏尾部区间及基础锚定收益反转时，应同时阅读补充文件 S2 和带日期的修订方案。
+无定义的稳健性百分比保存为 JSON `null`，无定义 bootstrap 次数明确报告。解释稀疏尾部区间及基础锚定收益反转时，应同时阅读补充文件 S2 和 [`methodology.md`](methodology.md)。

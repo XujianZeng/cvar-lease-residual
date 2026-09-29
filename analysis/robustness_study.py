@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-hoc 2026-09-29 audit follow-up; see revision_protocol_2026-09-29.md.
+"""Exploratory post-hoc sensitivity analyses; see methodology.md.
 
 Each proceeds scenario refits the complete LR/LP pipeline on the matching
 training scenario, then evaluates fixed rules on the matching test scenario.
@@ -104,7 +104,7 @@ def align_primary_intervals(result):
     result['primary_interval_source']='Primary percentage intervals reuse revision_results and cycle_results. Dollar-gap and leave-one-year-out intervals use the separately seeded robustness draws.'
 
 def main():
-    result={'analysis_status':'post_hoc_revision_2026-09-29','bootstrap':BOOT,
+    result={'analysis_status':'post_hoc_sensitivity_analysis','bootstrap':BOOT,
             'scenario_definitions':SCENARIOS,'scenarios':{},'month_cluster':[], 'gb_vs_lr':[]}
     primary={}
     for sid,(name,settings) in enumerate(SCENARIOS.items()):

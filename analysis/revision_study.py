@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Revision analyses on top of `buffer_study.py` (rules are refitted exactly as there).
+"""Pooled and stress analyses using the rules fitted in `buffer_study.py`.
 
 1. Evidence tiers: development (GM), replication (other issuers' holdout 1) and
    confirmatory holdouts (other issuers' holdout 2, collected after every rule,
