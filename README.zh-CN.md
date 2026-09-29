@@ -24,7 +24,7 @@
 
 ## 数据与分析说明
 
-- [`analysis_plan_extension.md`](analysis_plan_extension.md) 记录 GM 在 2019—2024 年间的跨年份检验方案。源文件最后修改于北京时间 2026-09-25 10:51:37，SHA-256 为 `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`。
+- [`analysis_plan_extension.md`](analysis_plan_extension.md) 说明 GM 在 2019—2024 年间的跨年份检验方案，SHA-256 为 `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`。
 - [`filings_used.csv`](filings_used.csv) 列出 17 个数据集所用的 185 份 SEC XML 文件，包括申报日期、accession 编号、来源链接、文件大小和提取的事件记录数。它是文件清单，不含逐笔租赁记录。
 - [`methodology.md`](methodology.md) 说明计价规则、回款口径、不确定性度量及探索性敏感性分析的解释边界。数值方法与论文补充文件 S3 对应。
 

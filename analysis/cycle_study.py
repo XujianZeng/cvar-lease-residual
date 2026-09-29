@@ -35,8 +35,8 @@ COMPARISONS = [(rs.CA, "uniform"), (rs.BA, "scaled_base"), (rs.CA, "scaled_base"
 
 def pct_change(v, kind, d):
     """% CVaR change; undefined (NaN) when the equal-value benchmark has zero CVaR.
-    Deviation from the plan, reported in the paper: in near-loss-free years a
-    bootstrap resample can contain no benchmark shortfall at all."""
+    In near-loss-free years a bootstrap resample can contain no benchmark
+    shortfall at all."""
     ref = rs.benchmark(kind, v, d)
     base = cvar(bs.shortfall(ref, d), ALPHA)
     return float("nan") if base == 0 else 100 * (cvar(bs.shortfall(v, d), ALPHA) / base - 1)

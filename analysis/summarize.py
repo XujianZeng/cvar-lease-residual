@@ -23,7 +23,7 @@ def collect():
 
 
 def legacy_absolute_gap_rows():
-    """Archived absolute-gap summary; not used for relative-change inference."""
+    """Absolute-gap summary; not used for relative-change inference."""
     rows = []
     for issuer, file in RUNS:
         r = json.loads((HERE / file).read_text())

@@ -24,7 +24,7 @@ This is research code for historical lease cohorts. It is not a production valua
 
 ## Data and analysis documentation
 
-- [`analysis_plan_extension.md`](analysis_plan_extension.md) specifies the GM 2019–2024 cross-year evaluation. The source file was last modified on 2026-09-25 at 10:51:37 China Standard Time; its SHA-256 is `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`.
+- [`analysis_plan_extension.md`](analysis_plan_extension.md) specifies the GM 2019–2024 cross-year evaluation. Its SHA-256 is `74266ffe5d0c36986e78ad13118e101294fb0c36b972936bfdff382ffba55e97`.
 - [`filings_used.csv`](filings_used.csv) lists 185 SEC XML filings used across 17 dataset labels, with filing dates, accession numbers, source URLs, file sizes, and extracted event-row counts. It contains filing metadata, not lease-level records.
 - [`methodology.md`](methodology.md) describes the valuation rules, proceeds specifications, uncertainty measures, and interpretation of exploratory sensitivity analyses. The numerical methods correspond to the manuscript's Supplementary File S3.
 
